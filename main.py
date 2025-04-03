@@ -21,13 +21,14 @@ def start_crawling(site):
         site_exists = curs.fetchone()
         if site_exists:
             return
+        curs.execute('''INSERT INTO sites (url) VALUES (?)''', (site,))
         print(site)
         try:
             r = rq.get(site)
             r.raise_for_status()
             soup = BeautifulSoup(r.text, 'html.parser')
             title = soup.find('title').string
-            curs.execute('''INSERT INTO sites (url, title) VALUES (?, ?)''', (site, title))
+            curs.execute('''UPDATE sites SET title = ? WHERE url = ?''', (title, site))
             conn.commit()
             print(title)
             for link in soup.find_all('a'):
@@ -36,6 +37,14 @@ def start_crawling(site):
                     new_site = f"{parsed.scheme}://{parsed.netloc}" + link.get('href')
                     start_crawling(new_site)
                     #time.sleep(0.05)
+                elif link.get('href').startswith('#'):
+                    parsed = urlsplit(site)
+                    new_site = f"{parsed.scheme}://{parsed.netloc}" + "/" + link.get('href')
+                    start_crawling(new_site)
+                elif ".php" in link.get('href'):
+                    parsed = urlsplit(site)
+                    new_site = f"{parsed.scheme}://{parsed.netloc}" + "/" + link.get('href')
+                    start_crawling(new_site)
                 else:
                     start_crawling(link.get('href'))
                     #time.sleep(0.05)
@@ -47,13 +56,14 @@ def start_crawling(site):
         site_exists = curs.fetchone()
         if site_exists:
             return
+        curs.execute('''INSERT INTO sites (url) VALUES (?)''', (site,))
         print(site)
         try:
             r = rq.get(site)
             r.raise_for_status()
             soup = BeautifulSoup(r.text, 'html.parser')
             title = soup.find('title').string
-            curs.execute('''INSERT INTO sites (url, title) VALUES (?, ?)''', (site, title))
+            curs.execute('''UPDATE sites SET title = ? WHERE url = ?''', (title, site))
             conn.commit()
             print(title)
             for link in soup.find_all('a'):
@@ -62,6 +72,14 @@ def start_crawling(site):
                     new_site = f"{parsed.scheme}://{parsed.netloc}" + link.get('href')
                     start_crawling(new_site)
                     #time.sleep(0.05)
+                elif link.get('href').startswith('#'):
+                    parsed = urlsplit(site)
+                    new_site = f"{parsed.scheme}://{parsed.netloc}" + "/" + link.get('href')
+                    start_crawling(new_site)
+                elif ".php" in link.get('href'):
+                    parsed = urlsplit(site)
+                    new_site = f"{parsed.scheme}://{parsed.netloc}" + "/" + link.get('href')
+                    start_crawling(new_site)
                 else:
                     start_crawling(link.get('href'))
                     #time.sleep(0.05)
@@ -76,3 +94,4 @@ conn.commit()
 print("Welcome!")
 ask = input("Which site?")
 start_crawling(ask)
+conn.close()
